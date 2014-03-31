@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-16"?>
+<LevelInfo xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <LevelSpeed>0.01</LevelSpeed>
+  <BubblesSpeedRange>
+    <x>-0.005</x>
+    <y>0.05</y>
+  </BubblesSpeedRange>
+  <BubblesSizeRange>
+    <x>0.5</x>
+    <y>3</y>
+  </BubblesSizeRange>
+  <BubblesInstantiationPeriodRange>
+    <x>0.1</x>
+    <y>1</y>
+  </BubblesInstantiationPeriodRange>
+  <BubblesInstantiationPeriod>1</BubblesInstantiationPeriod>
+  <LevelTime>10</LevelTime>
+  <LevelNumber>0</LevelNumber>
+  <MaxBubblesMissed>10</MaxBubblesMissed>
+</LevelInfo>
