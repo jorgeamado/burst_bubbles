@@ -20,6 +20,8 @@ namespace NetworkPeer
 		Socket socket;
 		Thread networkThread;
 		NetworkConfiguration configuration;
+		public IPEndPoint LocalEndPoint
+		{ get { return socket != null ? (IPEndPoint)socket.LocalEndPoint : null;}}
 
 		public Peer(NetworkConfiguration config)
 		{
@@ -35,7 +37,7 @@ namespace NetworkPeer
 			networkThread.IsBackground = true;
 			peerState = EPeerState.Active;
 			networkThread.Start();
-			Logger.Log(string.Format("peer - started {0} : {1}", socket.LocalEndPoint, configuration.Port));
+			Logger.Log(string.Format("peer - started {0}", socket.LocalEndPoint));
 		}
 
 		public void HearBeat()

@@ -52,6 +52,7 @@ namespace NetworkPeer
 
 		Peer peer;
 		public System.Action<string> OnMessageReceived;
+		public System.Action OnDisconnected;
 		DateTime lastMessageTimeStamp;
 		int timeOut;
 
@@ -122,6 +123,8 @@ namespace NetworkPeer
 						{
 							Status = EConnectionStatus.Disconnected;
 							Logger.Log("Disconnected: " + (blocks.Length == 2 ? blocks[1] : "No explanation"));
+							if (null != OnDisconnected)
+								OnDisconnected();
 							break;
 						}
 					case ETechnicalMessages.Ping:
