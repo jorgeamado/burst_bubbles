@@ -11,7 +11,7 @@ public class ResourceLoader
 
 	public AssetBundleRequest Load(string name, Type type)
 	{
-		Debug.Log("loading " + name);
+		Debug.Log("Loading " + name);
 		if (null == bundle)
 		{
 			bundle = www.assetBundle;
@@ -24,9 +24,8 @@ public class ResourceLoader
 	{
 		Caching.CleanCache();
 		string url = "file://" + Application.dataPath + path;
-		Debug.Log("loading bundle " + url);
+		Debug.Log("Loading bundle " + url);
 		www = WWW.LoadFromCacheOrDownload(url, 1);
 		return www;
 	}
-
 }

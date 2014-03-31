@@ -34,7 +34,7 @@ public class TextureFactory
 		}
 	}
 
-	static Texture2D MakePictureCross(int textureSize)
+	private Texture2D MakePictureCross(int textureSize)
 	{
 		var generatedtTexture = new Texture2D(textureSize, textureSize, TextureFormat.ARGB32, false);
 		var halftexture = generatedtTexture.height / 2;
@@ -59,8 +59,7 @@ public class TextureFactory
 		return generatedtTexture;
 	}
 
-
-	static Texture2D MakePicture(int textureSize)
+	private Texture2D MakePicture(int textureSize)
 	{
 		var generatedtTexture = new Texture2D(textureSize, textureSize, TextureFormat.ARGB32, false);
 		var halftexture = generatedtTexture.height / 2;
@@ -99,4 +98,3 @@ public class TextureFactory
 			return TexturesDictionary[256 + (opponent ? 1 : 0)];
 	}
 }
-
