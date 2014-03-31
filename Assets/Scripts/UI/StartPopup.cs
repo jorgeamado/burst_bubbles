@@ -3,29 +3,35 @@ using System.Collections;
 
 public class StartPopup : MonoBehaviour
 {
-	Network network;
-	LevelManager levelmanager;
+	ApplicationManager applicationManager;
 
 	void Start()
 	{
-		network = FindObjectOfType<Network>();
+		applicationManager = FindObjectOfType<ApplicationManager>();
 	}
+
+	string ip = "127.0.0.1";
+	string port = 0;
 
 	void OnGUI()
 	{
-		if (network.UIStatus == Network.EUIStatus.EnteringName)
+		if (applicationManager.GameStatus == ApplicationManager.EGameStatus.InitializationNetwork)
 		{
 			GUI.Box(new Rect(10, 10, 250, 120), "");
 			GUI.Label(new Rect(20, 40, 80, 20), "Name");
-			network.PlayerName = GUI.TextField(new Rect(80, 40, 80, 20), network.PlayerName);
+			applicationManager.PlayerName = GUI.TextField(new Rect(80, 40, 80, 20), applicationManager.PlayerName);
 
 			GUI.Label(new Rect(20, 60, 80, 20), "Address");
-			network.ip = GUI.TextField(new Rect(80, 60, 80, 20), network.ip);
-			network.port = int.Parse(GUI.TextField(new Rect(160, 60, 50, 20), network.port.ToString()));
+			ip = GUI.TextField(new Rect(80, 60, 80, 20), ip);
+			port = GUI.TextField(new Rect(160, 60, 50, 20), port);
 
 			if (GUI.Button(new Rect(20, 100, 80, 20), "StartGame"))
 			{
-				network.StartListening();
+				applicationManager.ip = ip;
+				if (int.TryParse(port, out applicationManager.port))
+				{
+					applicationManager.StartListening();
+				}
 			}
 		}
 	}
