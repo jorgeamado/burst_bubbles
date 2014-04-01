@@ -52,7 +52,7 @@ namespace NetworkPeer
 				while (peerState == EPeerState.Active)
 				{
 					RemoveDisconnectedPeers();
-	//				PingAllConnections();
+					PingAllConnections();
 
 					if (socket.Poll(1000, SelectMode.SelectRead)) // wait up to 1 ms for data to arrive
 					{
@@ -115,7 +115,6 @@ namespace NetworkPeer
 
 		void RemoveDisconnectedPeers()
 		{
-			//TODO add Ping Pong for timedOut connections
 			lock (connectedPeers)
 			{
 				var disconnectedConnections = connectedPeers.Where(connectedPeer => 
@@ -125,6 +124,7 @@ namespace NetworkPeer
 				foreach (var connectedPeer in disconnectedConnections)
 				{
 					Logger.Log(string.Format("{0} - REMOVED", connectedPeer.Value));
+					connectedPeer.Value.Disconnect("Timed out");
 					connectedPeers.Remove(connectedPeer.Key);
 				}
 			}

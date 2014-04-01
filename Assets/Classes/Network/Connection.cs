@@ -38,14 +38,14 @@ namespace NetworkPeer
 		{
 			get 
 			{ 
-//				if ((DateTime.Now - lastMessageTimeStamp).Seconds > timeOut)
-//					status = EConnectionStatus.TimedOut;
+				if ((DateTime.Now - lastMessageTimeStamp).Seconds > timeOut)
+					status = EConnectionStatus.TimedOut;
 			
 				return status; 
 			}
-			protected set { 
+			protected set 
+			{ 
 				Logger.Log(this.ToString() + "status changed to " + value);
-
 				this.status = value; 
 			}
 		}
@@ -122,9 +122,9 @@ namespace NetworkPeer
 					case ETechnicalMessages.Abort:
 						{
 							Status = EConnectionStatus.Disconnected;
-							Logger.Log("Disconnected: " + (blocks.Length == 2 ? blocks[1] : "No explanation"));
-							if (null != OnDisconnected)
+							if(null != OnDisconnected)
 								OnDisconnected();
+							Logger.Log("Disconnected: " + (blocks.Length == 2 ? blocks[1] : "No explanation"));
 							break;
 						}
 					case ETechnicalMessages.Ping:
@@ -199,6 +199,8 @@ namespace NetworkPeer
 			Logger.Log("Disconnect with message :" + message);
 			SendTechicalMessage(ETechnicalMessages.Abort, message);
 			Status = EConnectionStatus.Disconnected;
+			if(null != OnDisconnected)
+				OnDisconnected();
 		}
 
 		public override string ToString()
