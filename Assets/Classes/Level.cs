@@ -5,16 +5,16 @@ using System.Xml.Serialization;
 using System.IO;
 
 [Serializable]
-public class LevelInfo
+public class Level
 {
 	public enum ELevelState
 	{
-		Waiting,
-		Ready,
-		Stoped,
+		Loading,
 		Playing,
+		Stopped,
 		Failed,
 	}
+
 	[XmlIgnore]
 	public ELevelState LevelState;
 
@@ -43,9 +43,7 @@ public class LevelInfo
 	{
 		var bubble = new BubbleState();
 		bubble.Size = UnityEngine.Random.Range(BubblesSizeRange.x, BubblesSizeRange.y);
-		var halfOfScreen = (LevelBounds.y + LevelBounds.x) / 2f;
-		Debug.Log(halfOfScreen);
-		var posX = UnityEngine.Random.Range(LevelBounds.x + bubble.Size / 2f,  halfOfScreen - bubble.Size / 2f);
+		var posX = UnityEngine.Random.Range(LevelBounds.x + bubble.Size / 2f,  bubble.Size / 2f);
 		var posY = LevelBounds.w - bubble.Size / 2f;
 		bubble.StartPosition = new Vector2(posX, posY);
 		bubble.Speed = LevelNumber * LevelSpeed + Mathf.Lerp(BubblesSpeedRange.y, BubblesSpeedRange.x, bubble.Size / BubblesSizeRange.y);
@@ -62,8 +60,10 @@ public class LevelInfo
 	public void Reset()
 	{
 		LevelNumber = 0;
+		missedBubbles = 0;
+		levelScore = 0;
 		BubblesInstantiationPeriod = BubblesInstantiationPeriodRange.y;
-		LevelState = ELevelState.Stoped;
+		LevelState = ELevelState.Loading;
 	}
 
 	public void BubbleBursted(BubbleState state)
@@ -73,7 +73,7 @@ public class LevelInfo
 
 	public void BubbleMissed(BubbleState state)
 	{
-		if (++missedBubbles > MaxBubblesMissed)
+		if (++missedBubbles >= MaxBubblesMissed)
 		{
 			LevelState = ELevelState.Failed;
 		}
