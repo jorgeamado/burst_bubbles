@@ -11,7 +11,7 @@ public class StartPopup : MonoBehaviour
 	}
 
 	string ip = "127.0.0.1";
-	string port = 0;
+	string port = "0";
 
 	void OnGUI()
 	{
