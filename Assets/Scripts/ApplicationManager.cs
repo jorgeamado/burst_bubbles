@@ -2,45 +2,35 @@
 using System.Collections;
 using NetworkPeer;
 
-public class Network : MonoBehaviour 
+public class ApplicationManager : MonoBehaviour 
 {
 	Peer peer;
 	Connection OtherPlayer = null;
 
-	public string PlayerName = "Unity";
+	public string PlayerName = "Player Name";
 	public string ip = "127.0.0.1";
-	public int port = 14000;
+	public int port = 0;
 	public string OtherPlayerName = "Unknown";
 
-	LevelManager levelmanager;
+	GameController gameController;
 
-	public enum EUIStatus
+	public enum EGameStatus
 	{
-		EnteringName,
-		WaitingForConnection,
-		Ready,
-		Playing,
-	}
-	public EUIStatus UIStatus;
-
-	public enum EMessageType
-	{
-		Unknown,
-		GetName,
-		SendName,
-		Ready,
-		GameStart,
 		GameFinished,
-		BubbleCreated,
-		BubbleBursted,
-		BubbleMissed,
+		InitializationNetwork,
+		CreatingNetwork,
+		WaitingForAnswer,
+		OpponentReady,
+		Playing,
+
 	}
+	public EGameStatus GameStatus;
 
 	void Start () 
 	{
 		Application.runInBackground = true;
-		levelmanager = FindObjectOfType<LevelManager>();
-		UIStatus = EUIStatus.EnteringName;
+		gameController = FindObjectOfType<GameController>();
+		GameStatus = EGameStatus.InitializationNetwork;
 	}
 
 	void Update()
@@ -49,13 +39,28 @@ public class Network : MonoBehaviour
 		{
 			peer.HearBeat();
 		}
+
+		if(GameStatus == EGameStatus.Playing && gameController.level.LevelState == Level.ELevelState.Failed)
+		{
+			GameStatus = EGameStatus.GameFinished;
+			SendMessageToOtherPlayer(EMessageType.GameLost.ToString());
+		}
 	}
 
 	void NewConnectionEventHandler(Connection connection)
 	{
 		OtherPlayer = connection;
 		connection.OnMessageReceived += MessageHandler;
+		connection.OnDisconnected += ResetGame;
 		OtherPlayer.SendMessage(EMessageType.GetName.ToString());
+	}
+
+	void ResetGame()
+	{
+		GameStatus = EGameStatus.CreatingNetwork;
+		gameController.StopLevel();
+		gameController.level.Reset();
+		ResetOpponentConnection();
 	}
 
 	void MessageHandler(string msg)
@@ -76,15 +81,14 @@ public class Network : MonoBehaviour
 				}
 			case EMessageType.Ready:
 				{
-					if (levelmanager.level.LevelState == LevelInfo.ELevelState.Ready)
+					if (GameStatus == EGameStatus.WaitingForAnswer)
 					{
-						levelmanager.level.LevelState = LevelInfo.ELevelState.Playing;
-						UIStatus = EUIStatus.Playing;
+						gameController.StartLevel();
+						GameStatus = EGameStatus.Playing;
 					}
 					else
 					{
-						levelmanager.level.LevelState = LevelInfo.ELevelState.Waiting;
-						UIStatus = EUIStatus.WaitingForConnection;
+						GameStatus = EGameStatus.OpponentReady;
 					}
 					break;
 				}
@@ -92,22 +96,38 @@ public class Network : MonoBehaviour
 				{
 					var bubbleState = new BubbleState();
 					bubbleState.DeserializeFromString(blocks[1]);
-					levelmanager.InstantiateOpponentBubble(bubbleState);
+					gameController.InstantiateOpponentBubble(bubbleState);
 					break;
 				}
 			case EMessageType.BubbleBursted:
 				{
 					int id = int.Parse(blocks[1]);
-					levelmanager.OpponetBubbleBursted(id);
+					gameController.OpponetBubbleBursted(id);
 					break;
 				}
 			case EMessageType.BubbleMissed:
 				{
 					int id = int.Parse(blocks[1]);
-					levelmanager.OpponentBubbleMissed(id);
+					gameController.OpponentBubbleMissed(id);
 					break;
 				}
-
+			case EMessageType.GameLost:
+				{
+					gameController.StopLevel();
+					GameStatus = EGameStatus.GameFinished;
+					break;
+				}
+			case EMessageType.ReplayGame:
+				{
+					gameController.RestartLevel();
+					GameStatus = EGameStatus.Playing;
+					break;
+				}
+			case EMessageType.Leave:
+				{
+					ResetGame();
+					break;
+				}
 			default:
 				{
 					Logger.LogWarning("Unknown state: " + blocks[0]);
@@ -119,6 +139,11 @@ public class Network : MonoBehaviour
 	public bool IsOtherPlayerConnected
 	{
 		get { return null != OtherPlayer && OtherPlayer.Status == Connection.EConnectionStatus.Connected; }
+	}
+
+	public string PlayerInfo
+	{
+		get { return null == peer ? "No connections" : peer.LocalEndPoint.ToString();}
 	}
 
 	public string OpponentInfo
@@ -135,12 +160,18 @@ public class Network : MonoBehaviour
 			OtherPlayer.SendMessage(msg);
 	}
 		
-	void OnDestroy()
+	private void ResetOpponentConnection()
+	{
+		OtherPlayer.OnMessageReceived -= MessageHandler;
+		OtherPlayer.OnDisconnected -= ResetGame;
+		OtherPlayer = null;
+	}
+
+	private void OnDestroy()
 	{
 		if (null != OtherPlayer)
 		{
-			OtherPlayer.OnMessageReceived -= MessageHandler;
-			OtherPlayer = null;
+			ResetOpponentConnection();
 		}
 
 		if (null != peer)
@@ -159,7 +190,7 @@ public class Network : MonoBehaviour
 			peer = new Peer(config);
 			peer.OnNewConnection += NewConnectionEventHandler;
 			peer.Start();
-			UIStatus = EUIStatus.WaitingForConnection;
+			GameStatus = EGameStatus.CreatingNetwork;
 		}
 		catch (System.Exception ex)
 		{
@@ -169,17 +200,31 @@ public class Network : MonoBehaviour
 
 	public void Ready()
 	{
-		if (levelmanager.level.LevelState == LevelInfo.ELevelState.Waiting)
+		if (GameStatus == EGameStatus.OpponentReady)
 		{
-			levelmanager.level.LevelState = LevelInfo.ELevelState.Playing;
-			UIStatus = EUIStatus.Playing;
+			gameController.StartLevel();
+			GameStatus = EGameStatus.Playing;
 		}
 		else
 		{
-			levelmanager.level.LevelState = LevelInfo.ELevelState.Ready;
-			UIStatus = EUIStatus.WaitingForConnection;
+			GameStatus = EGameStatus.WaitingForAnswer;
 		}
 		OtherPlayer.SendMessage(EMessageType.Ready.ToString());
+	}
+
+	public void Replay()
+	{
+		if(null != OtherPlayer)
+			OtherPlayer.SendMessage(EMessageType.ReplayGame.ToString());
+		gameController.RestartLevel();
+		GameStatus = EGameStatus.Playing;
+	}
+
+	public void Leave()
+	{
+		if(null != OtherPlayer)
+			OtherPlayer.SendMessage(EMessageType.Leave.ToString());
+		ResetGame();
 	}
 
 	public void ConnectTo(string ip, int port)
